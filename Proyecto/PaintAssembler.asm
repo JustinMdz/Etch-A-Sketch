@@ -223,8 +223,7 @@
   
   principal_Loop:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     CALL CheckMouse
-    CALL Read_key
-    DRAW_PIXEL 12, X, Y
+    CALL read_Key
     jmp principal_Loop
 
   ; End the program
@@ -250,53 +249,63 @@
     RET
 CheckMouse ENDP
 
-  Read_key PROC far
+ read_Key PROC far
+    MOV ah, 01h ; Read key status
+    INT 16h
+
+    JZ No_key ; If no key has been pressed, jump to No_key
+
     MOV ah, 00h ; Read key
     INT 16h
 
-    ; Compare with direction key codes
+    ; Compare with the codes of the direction keys
     CMP ah, 48h    ; up
-    JE Key_up
+    JE Tcl_up
 
     CMP ah, 50h    ; down
-    JE Key_down
+    JE Tcl_down
 
-    CMP ah, 4Bh    ; left
-    JE Key_left
+    CMP ah, 4Bh    ; <-
+    JE Tcl_left
 
-    CMP ah, 4Dh    ; right
-    JE Key_right
+    CMP ah, 4Dh    ; ->
+    JE Tcl_right
 
-    RET
+    JMP No_key
 
-    Key_up:
-        CMP Y, 31
-        JLE Key_end   ; Don't move if at the top limit
+    Tcl_up:
+        CMP Y, 141
+        JLE Tcl_end   ; Do not move if at the upper limit
         DEC Y
-        JMP Key_end
+        JMP Tcl_end
 
-    Key_down:
-        CMP Y, 359
-        JGE Key_end   ; Don't move if at the bottom limit
+    Tcl_down:
+        CMP Y, 469
+        JGE Tcl_end   ; Do not move if at the lower limit
         INC Y
-        JMP Key_end
+        JMP Tcl_end
 
-    Key_left:
+    Tcl_left:
         CMP X, 21
-        JLE Key_end   ; Don't move if at the left limit
+        JLE Tcl_end   ; Do not move if at the left limit
         DEC X
-        JMP Key_end
+        JMP Tcl_end
 
-    Key_right:
+    Tcl_right:
         CMP X, 419
-        JGE Key_end   ; Don't move if at the right limit
+        JGE Tcl_end   ; Do not move if at the right limit
         INC X
-        JMP Key_end
+        JMP Tcl_end
 
-    Key_end:
+    Tcl_end:
+        DRAW_PIXEL 12, X, Y
         RET
 
-  Read_key ENDP
+    No_key:
+        RET
+
+read_Key ENDP
+
 
 end
 
