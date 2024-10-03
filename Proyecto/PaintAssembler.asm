@@ -2,7 +2,7 @@
 .stack 100h
 
 .data 
-;LABELS
+; LABELS
   COLORS BYTE "COLORS$" 
   CLEAR BYTE "CLEAR$"
   SAVE BYTE "SAVE$"
@@ -16,10 +16,10 @@
   Y DW 305
 
   SETPOSITION MACRO x, y
-    MOV ah,02h
-    MOV bh,0
+    MOV ah, 02h
+    MOV bh, 0
     MOV dh, x 
-    MOV dl,y
+    MOV dl, y
     INT 10h
   ENDM
   
@@ -39,23 +39,23 @@
   ENDM
 
 .code
-  ; Inicializacion
+  ; Initialization
   MOV ax, @DATA
   MOV ds, ax
 
-  MOV ah, 00;;color de fondo
+  MOV ah, 00 ;; background color
   MOV al, 12H
   INT 10H
 
-   ; -- Inicializa el mouse
+  ; -- Initialize the mouse
   MOV ax, 00 
   INT 33h
 
-  ; -- Muestra puntero del mouse en pantalla
+  ; -- Show mouse pointer on screen
   MOV ax, 01h 
   INT 33h
 
-  ; Pinta palabras de cada cuadro
+  ; Print labels for each box
   SETPOSITION 1, 24
   PRINTMESSAGE COLORS
 
@@ -74,7 +74,7 @@
   SETPOSITION 7, 62
   PRINTMESSAGE FILENAME
 
-  ;Pintar areas para la zona de trabajo
+  ; Draw areas for the work zone
   MOV cx, 400
   MOV COL, 20
   Sketch_horizontal: 
@@ -89,225 +89,223 @@
   MOV FIL, 140
   Sketch_vertical:
     PUSH cx
-    DRAW_PIXEL 15 , 20, FIL
-    DRAW_PIXEL 15 420, FIL
+    DRAW_PIXEL 15, 20, FIL
+    DRAW_PIXEL 15, 420, FIL
     INC FIL     
     POP cx
   LOOP Sketch_vertical
 
-  ; Area de eleccion de colores 
+  ; Color selection area
   MOV COL, 20
   MOV cx, 400
-  Colores_Horizontal:
+  Colors_Horizontal:
     PUSH cx
     DRAW_PIXEL 1, COL, 10
     DRAW_PIXEL 14, COL, 130
     INC COL
     POP cx
-  LOOP Colores_Horizontal
+  LOOP Colors_Horizontal
 
   MOV FIL, 10
   MOV cx, 120
-  Colores_Vertical:
+  Colors_Vertical:
     PUSH cx
     DRAW_PIXEL 4, 20, FIL
     DRAW_PIXEL 2, 420, FIL
     INC FIL     
     POP cx
-  LOOP Colores_Vertical
+  LOOP Colors_Vertical
 
-  ; Area del boton guardar bosquejo
+  ; Save button area
   MOV COL, 485
   MOV cx, 100
-  Guardar_Horizontal: 
+  Save_Horizontal: 
     PUSH cx
     DRAW_PIXEL 11, COL, 5
     DRAW_PIXEL 11, COL, 45
     INC COL
     POP cx
-  LOOP Guardar_Horizontal
+  LOOP Save_Horizontal
   
   MOV FIL, 5
   MOV cx, 40
-  Guardar_Vertical:
+  Save_Vertical:
     PUSH cx
     DRAW_PIXEL 11, 485, FIL
     DRAW_PIXEL 11, 585, FIL
     INC FIL
     POP cx 
-  LOOP Guardar_Vertical
+  LOOP Save_Vertical
 
-  ; Area del boton cargar imagen
+  ; Load button area
   MOV COL, 485
   MOV cx, 100
-  Cargar_Horizontal:
+  Load_Horizontal:
     PUSH cx
     DRAW_PIXEL 4, COL, 55
     DRAW_PIXEL 4, COL, 95
     INC COL
     POP cx
-  LOOP Cargar_Horizontal
+  LOOP Load_Horizontal
 
   MOV FIL, 55
   MOV cx, 40
-  Cargar_Vertical:
+  Load_Vertical:
     PUSH cx
     DRAW_PIXEL 4, 485, FIL
     DRAW_PIXEL 4, 585, FIL
     INC FIL
     POP cx
-  LOOP Cargar_Vertical
+  LOOP Load_Vertical
 
- ; Area del nombre asignado al bosquejo
+ ; File name area
   MOV COL, 485 
   MOV cx, 100
-  Nombre_Horizontal:
+  Name_Horizontal:
     PUSH cx
     DRAW_PIXEL 5, COL, 105
     DRAW_PIXEL 5, COL, 145
     INC COL
     POP cx
-  LOOP Nombre_Horizontal
+  LOOP Name_Horizontal
 
   MOV FIL, 105
   MOV cx, 40
-  Nombre_Vertical:
+  Name_Vertical:
     PUSH cx
     DRAW_PIXEL 5, 485, FIL
     DRAW_PIXEL 5, 585, FIL
     INC FIL
     POP cx 
-  LOOP Nombre_Vertical
+  LOOP Name_Vertical
 
-  ; Area del boton limpiar bosquejo
+  ; Clear button area
   MOV COL, 485
   MOV cx, 100
-  Limpiar_Horizontal:
+  Clear_Horizontal:
     PUSH cx
     DRAW_PIXEL 12, COL, 370
     DRAW_PIXEL 12, COL, 410
     INC COL
     POP cx
-  LOOP Limpiar_Horizontal
+  LOOP Clear_Horizontal
 
   MOV FIL, 370
   MOV cx, 40
-  Limpiar_Vertical:
+  Clear_Vertical:
     PUSH cx
     DRAW_PIXEL 12, 485, FIL
     DRAW_PIXEL 12, 585, FIL
     INC FIL
     POP cx
-  LOOP Limpiar_Vertical
+  LOOP Clear_Vertical
 
-  ; Area del boton para insertar imagen
+  ; Insert button area
   MOV COL, 485
   MOV cx, 100
-  Insertar_Horizontal:
+  Insert_Horizontal:
     PUSH cx
     DRAW_PIXEL 10, COL, 420
     DRAW_PIXEL 10, COL, 460
     INC COL
     POP cx
-  LOOP Insertar_Horizontal
-MOV FIL, 420
+  LOOP Insert_Horizontal
+
+  MOV FIL, 420
   MOV cx, 40
-  Insertar_Vertical:
+  Insert_Vertical:
     PUSH cx
     DRAW_PIXEL 10, 485, FIL
     DRAW_PIXEL 10, 585, FIL
     INC FIL
     POP cx
-  LOOP Insertar_Vertical
+  LOOP Insert_Vertical
   
-  ciclo:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    CALL ChecMouse
-    CALL Leer_tecla 
+  principal_Loop:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    CALL CheckMouse
+    CALL Read_key
     DRAW_PIXEL 12, X, Y
-    JMP ciclo
+    jmp principal_Loop
 
-  ; Terminar el programa
+  ; End the program
   MOV ah, 4CH
   INT 21H  
 
-   ChecMouse PROC far
-    ; Verificar si se ha hecho clic con el botón izquierdo del mouse
-    MOV ax, 03h   ; Función 03h de la interrupción 33h: Obtener el estado de los botones y la posición del cursor
+   CheckMouse PROC far
+    ; Check if the left mouse button was clicked
+    MOV ax, 03h   ; Function 03h of interrupt 33h: Get button state and cursor position
     INT 33h
-    ; AX ahora contiene el estado de los botones del mouse
-    ; CX contiene la posición X del cursor
-    ; DX contiene la posición Y del cursor
+    ; AX now contains the state of the mouse buttons
+    ; CX contains the X position of the cursor
+    ; DX contains the Y position of the cursor
 
-    TEST bx, 01h  ; Verificar si el botón izquierdo del mouse está presionado (bit 0 de BX)
-    JZ NoClick    ; Si no está presionado, saltar
+    TEST bx, 01h  ; Check if the left mouse button is pressed (bit 0 of BX)
+    JZ NoClick    ; If not pressed, jump
 
-    ; Guardar la posición del cursor en las variables X e Y
-    MOV X, CX     ; Guardar la posición X del mouse
-    MOV Y, DX     ; Guardar la posición Y del mouse
-
+    ; Save the cursor position in variables X and Y
+    MOV X, CX     ; Save the X position of the mouse
+    MOV Y, DX     ; Save the Y position of the mouse
 
     NoClick:
     RET
-ChecMouse ENDP
+CheckMouse ENDP
 
-
-  Leer_tecla PROC far
-    MOV ah, 00h ; Leer tecla
+  Read_key PROC far
+    MOV ah, 00h ; Read key
     INT 16h
 
-    ; Comparar con los códigos de las teclas de dirección
-    CMP ah, 48h    ; arriba
-    JE Tcl_arriba
+    ; Compare with direction key codes
+    CMP ah, 48h    ; up
+    JE Key_up
 
-    CMP ah, 50h    ; abajo
-    JE Tcl_abajo
+    CMP ah, 50h    ; down
+    JE Key_down
 
-    CMP ah, 4Bh    ; <-
-    JE Tcl_izq
+    CMP ah, 4Bh    ; left
+    JE Key_left
 
-    CMP ah, 4Dh    ; ->
-    JE Tcl_der
+    CMP ah, 4Dh    ; right
+    JE Key_right
 
     RET
 
-    Tcl_arriba:
+    Key_up:
         CMP Y, 31
-        JLE Tcl_final   ; No moverse si está en el límite superior
+        JLE Key_end   ; Don't move if at the top limit
         DEC Y
-        JMP Tcl_final
+        JMP Key_end
 
-    Tcl_abajo:
+    Key_down:
         CMP Y, 359
-        JGE Tcl_final   ; No moverse si está en el límite inferior
+        JGE Key_end   ; Don't move if at the bottom limit
         INC Y
-        JMP Tcl_final
+        JMP Key_end
 
-    Tcl_izq:
+    Key_left:
         CMP X, 21
-        JLE Tcl_final   ; No moverse si está en el límite izquierdo
+        JLE Key_end   ; Don't move if at the left limit
         DEC X
-        JMP Tcl_final
+        JMP Key_end
 
-    Tcl_der:
+    Key_right:
         CMP X, 419
-        JGE Tcl_final   ; No moverse si está en el límite derecho
+        JGE Key_end   ; Don't move if at the right limit
         INC X
-        JMP Tcl_final
+        JMP Key_end
 
-    Tcl_final:
+    Key_end:
         RET
 
-  Leer_tecla ENDP
+  Read_key ENDP
 
 end
 
-
-; ;; Limpiar pantalla con int 10h y AH=6
+; ;; Clear screen with int 10h and AH=6
 ;   MOV AH, 6
 ;   MOV AL, 0
 ;   MOV BH, 0
-;   MOV CH, 2 ; Coordenada Y inicial
-;   MOV CL, 3 ; Coordenada X inicial
-;   MOV DH, 21 ; Coordenada Y final
-;   MOV DL, 51 ; Coordenada X final
+;   MOV CH, 2 ; Initial Y coordinate
+;   MOV CL, 3 ; Initial X coordinate
+;   MOV DH, 21 ; Final Y coordinate
+;   MOV DL, 51 ; Final X coordinate
 ;   INT 10H
