@@ -3,6 +3,7 @@
 
 .data 
 ; LABELS
+  COLOR_SELECTED BYTE 2
   COLORS BYTE "COLORS$" 
   CLEAR BYTE "CLEAR$"
   SAVE BYTE "SAVE$"
@@ -249,62 +250,103 @@
     RET
 CheckMouse ENDP
 
- read_Key PROC far
-    MOV ah, 01h ; Read key status
+read_Key PROC far
+    MOV ah, 01h         ; Leer estado de la tecla
     INT 16h
 
-    JZ No_key ; If no key has been pressed, jump to No_key
+    JZ No_key           ; Si no se ha presionado ninguna tecla, saltar a No_key
 
-    MOV ah, 00h ; Read key
+    MOV ah, 00h         ; Leer la tecla
     INT 16h
 
-    ; Compare with the codes of the direction keys
-    CMP ah, 48h    ; up
+    ; Verificar los códigos de las teclas de dirección
+    CMP ah, 48h         ; arriba
     JE Tcl_up
 
-    CMP ah, 50h    ; down
+    CMP ah, 50h         ; abajo
     JE Tcl_down
 
-    CMP ah, 4Bh    ; <-
+    CMP ah, 4Bh         ; izquierda
     JE Tcl_left
 
-    CMP ah, 4Dh    ; ->
+    CMP ah, 4Dh         ; derecha
     JE Tcl_right
 
     JMP No_key
 
-    Tcl_up:
-        CMP Y, 141
-        JLE Tcl_end   ; Do not move if at the upper limit
-        DEC Y
-        JMP Tcl_end
+Tcl_up:
+    ; Verificar si está dentro del rango permitido antes de mover
+    CMP Y, 141
+    JLE Tcl_end         ; No moverse si está en el límite superior
+    ; Verificar límites X también para evitar que pinte fuera del área
+    CMP X, 21
+    JL Tcl_end          ; No moverse si X está fuera del límite izquierdo
+    CMP X, 419
+    JG Tcl_end          ; No moverse si X está fuera del límite derecho
+    DEC Y               ; Mover hacia arriba
+    JMP Tcl_end
 
-    Tcl_down:
-        CMP Y, 469
-        JGE Tcl_end   ; Do not move if at the lower limit
-        INC Y
-        JMP Tcl_end
+Tcl_down:
+    ; Verificar si está dentro del rango permitido antes de mover
+    CMP Y, 469
+    JGE Tcl_end         ; No moverse si está en el límite inferior
+    ; Verificar límites X también
+    CMP X, 21
+    JL Tcl_end          ; No moverse si X está fuera del límite izquierdo
+    CMP X, 419
+    JG Tcl_end          ; No moverse si X está fuera del límite derecho
+    INC Y               ; Mover hacia abajo
+    JMP Tcl_end
 
-    Tcl_left:
-        CMP X, 21
-        JLE Tcl_end   ; Do not move if at the left limit
-        DEC X
-        JMP Tcl_end
+Tcl_left:
+    ; Verificar si está dentro del rango permitido antes de mover
+    CMP X, 21
+    JLE Tcl_end         ; No moverse si está en el límite izquierdo
+    ; Verificar límites Y también
+    CMP Y, 141
+    JL Tcl_end          ; No moverse si Y está fuera del límite superior
+    CMP Y, 469
+    JG Tcl_end          ; No moverse si Y está fuera del límite inferior
+    DEC X               ; Mover hacia la izquierda
+    JMP Tcl_end
 
-    Tcl_right:
-        CMP X, 419
-        JGE Tcl_end   ; Do not move if at the right limit
-        INC X
-        JMP Tcl_end
+Tcl_right:
+    ; Verificar si está dentro del rango permitido antes de mover
+    CMP X, 419
+    JGE Tcl_end         ; No moverse si está en el límite derecho
+    ; Verificar límites Y también
+    CMP Y, 141
+    JL Tcl_end          ; No moverse si Y está fuera del límite superior
+    CMP Y, 469
+    JG Tcl_end          ; No moverse si Y está fuera del límite inferior
+    INC X               ; Mover hacia la derecha
+    JMP Tcl_end
 
-    Tcl_end:
-        DRAW_PIXEL 12, X, Y
-        RET
+Tcl_end:
+    ; Solo pintar si X y Y están dentro de los límites correctos
+    CMP X, 21
+    JL No_draw          ; No pintar si X está fuera del límite izquierdo
+    CMP X, 419
+    JG No_draw          ; No pintar si X está fuera del límite derecho
+    CMP Y, 141
+    JL No_draw          ; No pintar si Y está fuera del límite superior
+    CMP Y, 469
+    JG No_draw          ; No pintar si Y está fuera del límite inferior
+    DRAW_PIXEL COLOR_SELECTED, X, Y
+    JMP Done
 
-    No_key:
-        RET
+No_draw:
+    ; Si no está en los límites, no pintar nada
+    JMP Done
+
+Done:
+    RET
+
+No_key:
+    RET
 
 read_Key ENDP
+
 
 
 end
