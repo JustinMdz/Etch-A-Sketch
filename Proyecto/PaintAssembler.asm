@@ -3,7 +3,7 @@
 
   .data 
   ; LABELS
-    COLOR_SELECTED BYTE 2
+    COLOR_SELECTED BYTE 4
     COLORS BYTE "COLORS$" 
     CLEAR BYTE "CLEAR$"
     SAVE BYTE "SAVE$"
@@ -101,19 +101,16 @@
     ;Pintar los colores-----------------
    
     DRAW_SQUARE 5,10,2,3,1
-    DRAW_SQUARE 5,10,5,6,2
+    DRAW_SQUARE 15,20,2,3,2
+    DRAW_SQUARE 25,30,2,3,3 
+    DRAW_SQUARE 35,40,2,3,4 
+    DRAW_SQUARE 45,50,2,3,5
 
-    DRAW_SQUARE 15,20,2,3,3
-    DRAW_SQUARE 15,20,5,6,4
-
-    DRAW_SQUARE 25,30,2,3,5
-    DRAW_SQUARE 25,30,5,6,4
-    
-    DRAW_SQUARE 35,40,2,3,10
-    DRAW_SQUARE 35,40,5,6,13
-
-    DRAW_SQUARE 45,50,2,3,14
-    DRAW_SQUARE 45,50,5,6,15
+    DRAW_SQUARE 5,10,5,6,6
+    DRAW_SQUARE 15,20,5,6,10
+    DRAW_SQUARE 25,30,5,6,13
+    DRAW_SQUARE 35,40,5,6,14
+    DRAW_SQUARE 45,50,5,6,15  
 
     ; Draw areas for the work zone
     MOV cx, 400
@@ -324,8 +321,6 @@ EndConvert:
     RET
 NUM_TO_STRING ENDP
 
-
-
     CheckMouse PROC far
       ; Check if the left mouse button was clicked
       MOV ax, 03h   ; Function 03h of interrupt 33h: Get button state and cursor position
@@ -341,9 +336,149 @@ NUM_TO_STRING ENDP
       MOV X, CX     ; Save the X position of the mouse
       MOV Y, DX     ; Save the Y position of the mouse
 
+      CALL CheckClick
+
       NoClick:
       RET
   CheckMouse ENDP
+
+  
+; Agregar más cuadrados según sea necesario
+
+; ; Procedimiento para verificar si el clic está dentro de un cuadrado
+CheckClick PROC
+CheckColor1:
+    CMP X, 040
+    JL EndCheck
+    CMP X, 086
+    JG CheckColor2
+    CMP Y, 032
+    JL EndCheck
+    CMP Y, 063
+    JG CheckColor6
+    MOV COLOR_SELECTED, 1
+    JMP EndCheck
+
+CheckColor2:
+    CMP X, 120
+    JL EndCheck
+    CMP X, 166
+    JG CheckColor3
+    CMP Y, 032
+    JL EndCheck
+    CMP Y, 063
+    JG CheckColor7
+    MOV COLOR_SELECTED, 2
+    JMP EndCheck
+
+
+CheckColor3:
+CMP X, 200
+    JL EndCheck
+    CMP X, 246
+    JG CheckColor4
+    CMP Y, 032
+    JL EndCheck
+    CMP Y, 063
+    JG CheckColor8
+    MOV COLOR_SELECTED, 3
+    JMP EndCheck
+
+    CheckColor4:
+CMP X, 280
+    JL EndCheck
+    CMP X, 326
+    JG CheckColor5
+    CMP Y, 032
+    JL EndCheck
+    CMP Y, 063
+    JG CheckColor9
+    MOV COLOR_SELECTED, 4
+    JMP EndCheck
+
+
+    CheckColor5:
+     CMP X, 406
+    JG EndCheck;exist fast intercambiar a evaluar la derecha primero
+    CMP Y, 032
+    JL EndCheck
+
+    CMP X, 360
+    JL CheckColor6
+   
+    CMP Y, 063
+    JG CheckColor10
+
+    MOV COLOR_SELECTED, 5
+    JMP EndCheck
+
+    CheckColor6:
+    CMP X, 040
+    JL EndCheck
+    CMP X, 086
+    JG CheckColor7
+    CMP Y, 080
+    JL EndCheck
+    CMP Y, 110
+    JG EndCheck
+    MOV COLOR_SELECTED, 6
+    JMP EndCheck
+
+CheckColor7:
+    CMP X, 120
+    JL EndCheck
+    CMP X, 166
+    JG CheckColor8
+    CMP Y, 080
+    JL EndCheck
+    CMP Y, 110
+    JG EndCheck
+    MOV COLOR_SELECTED, 10
+    JMP EndCheck
+
+
+CheckColor8:
+CMP X, 200
+    JL EndCheck
+    CMP X, 246
+    JG CheckColor9
+    CMP Y, 080
+    JL EndCheck
+    CMP Y, 110
+    JG EndCheck
+    MOV COLOR_SELECTED, 13
+    JMP EndCheck
+
+    CheckColor9:
+CMP X, 280
+    JL EndCheck
+    CMP X, 326
+    JG CheckColor10
+    CMP Y, 080
+    JL EndCheck
+    CMP Y, 110
+    JG EndCheck
+    MOV COLOR_SELECTED, 14
+    JMP EndCheck
+
+
+    CheckColor10:
+CMP X, 360
+    JL EndCheck
+    CMP X, 406
+    JG EndCheck
+    CMP Y, 080
+    JL EndCheck
+    CMP Y, 110
+    JG EndCheck
+    MOV COLOR_SELECTED, 15
+    JMP EndCheck
+
+    
+
+EndCheck:
+    RET
+CheckClick ENDP
 
   read_Key PROC far
       MOV ah, 01h         ; Leer estado de la tecla
