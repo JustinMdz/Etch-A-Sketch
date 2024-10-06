@@ -10,6 +10,12 @@
     LOAD BYTE "LOAD$"
     INSERT BYTE "INSERT$"
     FILENAME BYTE "File Name:$"
+    XPOS BYTE "X:$"
+    YPOS BYTE "Y:$"
+
+    buffer DB 6 DUP(0)   ; Buffer para almacenar el número convertido a cadena (máximo 5 dígitos más '$')
+    TEN DW 10            ; Valor constante 10 para la división
+        
 
     COL DW ?
     FIL DW ?
@@ -86,8 +92,14 @@
     SETPOSITION 7, 62
     PRINTMESSAGE FILENAME
 
+     SETPOSITION 21,61
+     PRINTMESSAGE  XPOS
+
+     SETPOSITION 22,61
+     PRINTMESSAGE  YPOS
+
     ;Pintar los colores-----------------
-    ;Pintar los colores
+   
     DRAW_SQUARE 5,10,2,3,1
     DRAW_SQUARE 5,10,5,6,2
 
@@ -253,11 +265,66 @@
     principal_Loop:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
       CALL CheckMouse
       CALL read_Key
+      CALL PRINT_COORDINATES
+      CALL CLEAR_SCREEN
       jmp principal_Loop
 
-    ; End the program
-    MOV ah, 4CH
-    INT 21H  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ PRINT_COORDINATES PROC
+      MOV AX, X
+CALL NUM_TO_STRING
+SETPOSITION 21, 68
+PRINTMESSAGE buffer
+
+MOV AX, Y
+CALL NUM_TO_STRING
+SETPOSITION 22, 68
+PRINTMESSAGE buffer
+PRINT_COORDINATES ENDP
+
+      NUM_TO_STRING PROC
+    ; Entrada: AX contiene el número a convertir
+    ; Salida: DS:SI apunta a la cadena convertida (buffer temporal)
+
+    PUSH DX        ; Guardar registros
+    PUSH CX
+    PUSH BX
+
+    MOV SI, OFFSET buffer ; Apuntar a donde almacenaremos la cadena
+    MOV CX, 0            ; Inicializar contador de dígitos
+
+    CMP AX, 0
+    JNE ConvertLoop
+    MOV BYTE PTR [SI], '0' ; Si el número es 0, manejar caso especial
+    INC SI
+    JMP EndConvert
+
+ConvertLoop:
+    MOV DX, 0            ; Limpiar DX para la división
+    DIV TEN              ; Dividir AX entre 10 (guardando cociente en AX y residuo en DX)
+    ADD DL, '0'          ; Convertir el dígito a carácter ASCII
+    PUSH DX              ; Almacenar el dígito
+    INC CX               ; Aumentar el contador de dígitos
+    TEST AX, AX          ; Ver si hemos terminado (AX == 0)
+    JNZ ConvertLoop
+
+PopDigits:
+    POP DX               ; Recuperar el dígito en orden inverso
+    MOV [SI], DL         ; Almacenar en la cadena
+    INC SI               ; Mover el puntero de la cadena
+    LOOP PopDigits        ; Repetir hasta que CX == 0
+
+EndConvert:
+    MOV BYTE PTR [SI], '$' ; Terminar la cadena con '$'
+    INC SI                ; Ajustar el puntero de la cadena
+
+    POP BX                ; Restaurar registros
+    POP CX
+    POP DX
+    RET
+NUM_TO_STRING ENDP
+
+
 
     CheckMouse PROC far
       ; Check if the left mouse button was clicked
@@ -375,7 +442,24 @@
 
   read_Key ENDP
 
+CLEAR_SCREEN PROC
+    PUSH AX
+    PUSH CX
+    PUSH DX
+    PUSH BX
 
+    MOV AX, 0600h   
+    MOV BH, 00h     
+    MOV CX, 153Fh   
+    MOV DX, 164Fh    
+    INT 10h         
+
+    POP BX
+    POP DX
+    POP CX
+    POP AX
+    RET
+CLEAR_SCREEN ENDP
 
   end
 
