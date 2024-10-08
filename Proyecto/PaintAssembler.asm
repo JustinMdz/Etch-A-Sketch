@@ -112,48 +112,6 @@
     DRAW_SQUARE 35,40,5,6,14
     DRAW_SQUARE 45,50,5,6,15  
 
-    ; Draw areas for the work zone
-    MOV cx, 400
-    MOV COL, 20
-    Sketch_horizontal: 
-      PUSH cx
-      DRAW_PIXEL 15, COL, 140
-      DRAW_PIXEL 15, COL, 470
-      INC COL 
-      POP cx
-    LOOP Sketch_horizontal
-
-    MOV cx, 331
-    MOV FIL, 140
-    Sketch_vertical:
-      PUSH cx
-      DRAW_PIXEL 15, 20, FIL
-      DRAW_PIXEL 15, 420, FIL
-      INC FIL     
-      POP cx
-    LOOP Sketch_vertical
-
-    ; Color selection area
-    MOV COL, 20
-    MOV cx, 400
-    Colors_Horizontal:
-      PUSH cx
-      DRAW_PIXEL 1, COL, 10
-      DRAW_PIXEL 14, COL, 130
-      INC COL
-      POP cx
-    LOOP Colors_Horizontal
-
-    MOV FIL, 10
-    MOV cx, 120
-    Colors_Vertical:
-      PUSH cx
-      DRAW_PIXEL 4, 20, FIL
-      DRAW_PIXEL 2, 420, FIL
-      INC FIL     
-      POP cx
-    LOOP Colors_Vertical
-
     ; Save button area
     MOV COL, 485
     MOV cx, 100
@@ -258,6 +216,49 @@
       INC FIL
       POP cx
     LOOP Insert_Vertical
+
+        ; Draw areas for the work zone
+        DrawWorkZoneAreas:
+    MOV cx, 400
+    MOV COL, 20
+    Sketch_horizontal: 
+      PUSH cx
+      DRAW_PIXEL 15, COL, 140
+      DRAW_PIXEL 15, COL, 470
+      INC COL 
+      POP cx
+    LOOP Sketch_horizontal
+
+    MOV cx, 331
+    MOV FIL, 140
+    Sketch_vertical:
+      PUSH cx
+      DRAW_PIXEL 15, 20, FIL
+      DRAW_PIXEL 15, 420, FIL
+      INC FIL     
+      POP cx
+    LOOP Sketch_vertical
+
+    ; Color selection area
+    MOV COL, 20
+    MOV cx, 400
+    Colors_Horizontal:
+      PUSH cx
+      DRAW_PIXEL 1, COL, 10
+      DRAW_PIXEL 14, COL, 130
+      INC COL
+      POP cx
+    LOOP Colors_Horizontal
+
+    MOV FIL, 10
+    MOV cx, 120
+    Colors_Vertical:
+      PUSH cx
+      DRAW_PIXEL 4, 20, FIL
+      DRAW_PIXEL 2, 420, FIL
+      INC FIL     
+      POP cx
+    LOOP Colors_Vertical
     
     principal_Loop:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
       CALL CheckMouse
@@ -336,13 +337,32 @@ NUM_TO_STRING ENDP
       MOV X, CX     ; Save the X position of the mouse
       MOV Y, DX     ; Save the Y position of the mouse
 
+      CALL CheckClearZone
       CALL CheckClick
 
       NoClick:
       RET
   CheckMouse ENDP
 
-  
+
+CheckClearZone PROC
+    CMP X, 485
+    JL CheckClearZoneEnd
+    CMP X, 585
+    JG CheckClearZoneEnd
+    CMP Y, 370
+    JL CheckClearZoneEnd
+    CMP Y, 410
+    JG CheckClearZoneEnd
+   DRAW_SQUARE 02,52,08,29,0
+   JMP DrawWorkZoneAreas
+   
+
+CheckClearZoneEnd:
+RET
+CheckClearZone ENDP
+
+
 ; Agregar más cuadrados según sea necesario
 
 ; ; Procedimiento para verificar si el clic está dentro de un cuadrado
@@ -480,6 +500,7 @@ EndCheck:
     RET
 CheckClick ENDP
 
+
   read_Key PROC far
       MOV ah, 01h         ; Leer estado de la tecla
       INT 16h
@@ -595,6 +616,7 @@ CLEAR_SCREEN PROC
     POP AX
     RET
 CLEAR_SCREEN ENDP
+
 
   end
 
