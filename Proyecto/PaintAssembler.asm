@@ -21,6 +21,8 @@
     FIL DW ?
     X DW 220
     Y DW 305
+    SKETCH_X DW 220
+    SKETCH_Y DW 305
 
     SETPOSITION MACRO x, y
       MOV ah, 02h
@@ -337,13 +339,32 @@ NUM_TO_STRING ENDP
       MOV X, CX     ; Save the X position of the mouse
       MOV Y, DX     ; Save the Y position of the mouse
 
+      CALL CheckInterSketchZone
       CALL CheckClearZone
       CALL CheckClick
+
 
       NoClick:
       RET
   CheckMouse ENDP
 
+CheckInterSketchZone PROC
+    CMP X, 20
+    JL CheckInterSketchZoneEnd
+    CMP X, 420
+    JG CheckInterSketchZoneEnd
+    CMP Y, 140
+    JL CheckInterSketchZoneEnd
+    CMP Y, 470
+    JG CheckInterSketchZoneEnd
+          MOV AX,X
+      MOV SKETCH_X,AX
+      MOV BX,Y
+      MOV SKETCH_Y,BX
+
+CheckInterSketchZoneEnd:
+
+CheckInterSketchZone ENDP 
 
 CheckClearZone PROC
     CMP X, 485
@@ -483,7 +504,7 @@ CMP X, 280
 
 
     CheckColor10:
-CMP X, 360
+    CMP X, 360
     JL EndCheck
     CMP X, 406
     JG EndCheck
@@ -527,63 +548,68 @@ CheckClick ENDP
 
   Tcl_up:
       ; Verificar si está dentro del rango permitido antes de mover
-      CMP Y, 141
+      CMP SKETCH_Y, 141
       JLE Tcl_end         ; No moverse si está en el límite superior
       ; Verificar límites X también para evitar que pinte fuera del área
-      CMP X, 21
+      CMP SKETCH_X, 21
       JL Tcl_end          ; No moverse si X está fuera del límite izquierdo
-      CMP X, 419
+      CMP SKETCH_X, 419
       JG Tcl_end          ; No moverse si X está fuera del límite derecho
-      DEC Y               ; Mover hacia arriba
+      DEC SKETCH_Y               ; Mover hacia arriba
       JMP Tcl_end
 
   Tcl_down:
       ; Verificar si está dentro del rango permitido antes de mover
-      CMP Y, 469
+      CMP SKETCH_Y, 469
       JGE Tcl_end         ; No moverse si está en el límite inferior
       ; Verificar límites X también
-      CMP X, 21
+      CMP SKETCH_X, 21
       JL Tcl_end          ; No moverse si X está fuera del límite izquierdo
-      CMP X, 419
+      CMP SKETCH_X, 419
       JG Tcl_end          ; No moverse si X está fuera del límite derecho
-      INC Y               ; Mover hacia abajo
+      INC SKETCH_Y               ; Mover hacia abajo
       JMP Tcl_end
 
   Tcl_left:
       ; Verificar si está dentro del rango permitido antes de mover
-      CMP X, 21
+      CMP SKETCH_X, 21
       JLE Tcl_end         ; No moverse si está en el límite izquierdo
       ; Verificar límites Y también
-      CMP Y, 141
+      CMP SKETCH_Y, 141
       JL Tcl_end          ; No moverse si Y está fuera del límite superior
-      CMP Y, 469
+      CMP SKETCH_Y, 469
       JG Tcl_end          ; No moverse si Y está fuera del límite inferior
-      DEC X               ; Mover hacia la izquierda
+      DEC SKETCH_X               ; Mover hacia la izquierda
       JMP Tcl_end
 
   Tcl_right:
       ; Verificar si está dentro del rango permitido antes de mover
-      CMP X, 419
+      CMP SKETCH_X, 419
       JGE Tcl_end         ; No moverse si está en el límite derecho
       ; Verificar límites Y también
-      CMP Y, 141
+      CMP SKETCH_Y, 141
       JL Tcl_end          ; No moverse si Y está fuera del límite superior
-      CMP Y, 469
+      CMP SKETCH_Y, 469
       JG Tcl_end          ; No moverse si Y está fuera del límite inferior
-      INC X               ; Mover hacia la derecha
+      INC SKETCH_X               ; Mover hacia la derecha
       JMP Tcl_end
 
   Tcl_end:
       ; Solo pintar si X y Y están dentro de los límites correctos
-      CMP X, 21
+      CMP SKETCH_X, 21
       JL No_draw          ; No pintar si X está fuera del límite izquierdo
-      CMP X, 419
+      CMP SKETCH_X, 419
       JG No_draw          ; No pintar si X está fuera del límite derecho
-      CMP Y, 141
+      CMP SKETCH_Y, 141
       JL No_draw          ; No pintar si Y está fuera del límite superior
-      CMP Y, 469
+      CMP SKETCH_Y, 469
       JG No_draw          ; No pintar si Y está fuera del límite inferior
-      DRAW_PIXEL COLOR_SELECTED, X, Y
+      DRAW_PIXEL COLOR_SELECTED, SKETCH_X, SKETCH_Y
+
+      MOV AX,SKETCH_X
+      MOV X,AX
+      MOV bx,SKETCH_Y
+      MOV Y,bx
       JMP Done
 
   No_draw:
