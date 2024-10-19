@@ -1,0 +1,5 @@
+# Ignorar todos los archivos en la carpeta Etch-A-Sketch
+Etch-A-Sketch/*
+
+# Excepción para los archivos .asm
+!Etch-A-Sketch/*.asm

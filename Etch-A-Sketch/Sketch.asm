@@ -1,30 +1,28 @@
-  .model small 
-  .stack 100h
-
-  .data 
-  ; LABELS
-    COLOR_SELECTED BYTE 4
-    COLORS BYTE "COLORS$" 
-    CLEAR BYTE "CLEAR$"
-    SAVE BYTE "SAVE$"
-    LOAD BYTE "LOAD$"
-    INSERT BYTE "INSERT$"
-    FILENAME BYTE "File Name:$"
-    XPOS BYTE "X:$"
-    YPOS BYTE "Y:$"
-
-    buffer DB 6 DUP(0)   ; Buffer para almacenar el número convertido a cadena (máximo 5 dígitos más '$')
-    TEN DW 10            ; Valor constante 10 para la división
+.model small
+.stack 100h
+.data
+  msg            db 'Hello, World!', 0Dh, 0Ah, '$'  ; El mensaje termina con '$' para DOS interrupt
+  COLOR_SELECTED db 4
+  COLORS         db "COLORS$"
+  CLEAR          db "CLEAR$"
+  SAVE           db "SAVE$"
+  LOAD           db "LOAD$"
+  INSERT         db "INSERT$"
+  FILENAME       db "File Name:$"
+  XPOS           db "X:$"
+  YPOS           db "Y:$"
+  buffer         DB 6 DUP(0)                        ; Buffer para almacenar el número convertido a cadena (máximo 5 dígitos más '$')
+  TEN            DW 10                              ; Valor constante 10 para la división
         
 
-    COL DW ?
-    FIL DW ?
-    X DW 220
-    Y DW 305
-    SKETCH_X DW 220
-    SKETCH_Y DW 305
+  COL            DW ?
+  FIL            DW ?
+  X              DW 220
+  Y              DW 305
+  SKETCH_X       DW 220
+  SKETCH_Y       DW 305
 
-    SETPOSITION MACRO x, y
+   SETPOSITION MACRO x, y
       MOV ah, 02h
       MOV bh, 0
       MOV dh, x 
@@ -47,7 +45,7 @@
       INT 21h 
     ENDM
 
-      DRAW_SQUARE MACRO x_inicial, x_final, y_inicial, y_final, color
+        DRAW_SQUARE MACRO x_inicial, x_final, y_inicial, y_final, color
       MOV AH, 6          ; Función para scroll hacia arriba (limpiar pantalla)
       MOV AL, 0          ; Número de líneas a desplazar (0 significa llenar con el color)
       MOV BH, color      ; Color de fondo
@@ -58,9 +56,10 @@
       INT 10H            ; Llamada a la interrupción del BIOS de video
   ENDM
 
-  .code
-    ; Initialization
-    MOV ax, @DATA
+
+.code
+main PROC
+     MOV ax, @DATA
     MOV ds, ax
 
     MOV ah, 00 ;; background color
@@ -100,7 +99,7 @@
      SETPOSITION 22,61
      PRINTMESSAGE  YPOS
 
-    ;Pintar los colores-----------------
+         ;Pintar los colores-----------------
    
     DRAW_SQUARE 5,10,2,3,1
     DRAW_SQUARE 15,20,2,3,2
@@ -114,7 +113,7 @@
     DRAW_SQUARE 35,40,5,6,14
     DRAW_SQUARE 45,50,5,6,15  
 
-    ; Save button area
+      ; Save button area
     MOV COL, 485
     MOV cx, 100
     Save_Horizontal: 
@@ -261,16 +260,15 @@
       INC FIL     
       POP cx
     LOOP Colors_Vertical
-    
-    principal_Loop:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+     principal_Loop:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
       CALL CheckMouse
       CALL read_Key
       CALL PRINT_COORDINATES
       CALL CLEAR_SCREEN
       jmp principal_Loop
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
- PRINT_COORDINATES PROC
+      
+       PRINT_COORDINATES PROC
       MOV AX, X
 CALL NUM_TO_STRING
 SETPOSITION 21, 68
@@ -282,7 +280,7 @@ SETPOSITION 22, 68
 PRINTMESSAGE buffer
 PRINT_COORDINATES ENDP
 
-      NUM_TO_STRING PROC
+ NUM_TO_STRING PROC
     ; Entrada: AX contiene el número a convertir
     ; Salida: DS:SI apunta a la cadena convertida (buffer temporal)
 
@@ -324,7 +322,7 @@ EndConvert:
     RET
 NUM_TO_STRING ENDP
 
-    CheckMouse PROC far
+       CheckMouse PROC 
       ; Check if the left mouse button was clicked
       MOV ax, 03h   ; Function 03h of interrupt 33h: Get button state and cursor position
       INT 33h
@@ -348,7 +346,7 @@ NUM_TO_STRING ENDP
       RET
   CheckMouse ENDP
 
-CheckInterSketchZone PROC
+  CheckInterSketchZone PROC
     CMP X, 20
     JL CheckInterSketchZoneEnd
     CMP X, 420
@@ -368,165 +366,72 @@ CheckInterSketchZone ENDP
 
 CheckClearZone PROC
     CMP X, 485
-    JL CheckClearZoneEnd
+    JL ENDZONE
     CMP X, 585
-    JG CheckClearZoneEnd
+    JG ENDZONE
     CMP Y, 370
-    JL CheckClearZoneEnd
+    JL ENDZONE
     CMP Y, 410
-    JG CheckClearZoneEnd
-   DRAW_SQUARE 02,52,08,29,0
-   JMP DrawWorkZoneAreas
+    JG ENDZONE
    
+   CALL PINTARLIMPIAR
 
-CheckClearZoneEnd:
+ENDZONE:
 RET
+  
 CheckClearZone ENDP
 
+  PINTARLIMPIAR PROC
+ DRAW_SQUARE 02,52,08,29,0
+    MOV cx, 400
+    MOV COL, 20
+    Sketch_horizontal1: 
+      PUSH cx
+      DRAW_PIXEL 15, COL, 140
+      DRAW_PIXEL 15, COL, 470
+      INC COL 
+      POP cx
+    LOOP Sketch_horizontal1
 
-; Agregar más cuadrados según sea necesario
+    MOV cx, 331
+    MOV FIL, 140
+    Sketch_vertical1:
+      PUSH cx
+      DRAW_PIXEL 15, 20, FIL
+      DRAW_PIXEL 15, 420, FIL
+      INC FIL     
+      POP cx
+    LOOP Sketch_vertical1
 
-; ; Procedimiento para verificar si el clic está dentro de un cuadrado
-CheckClick PROC
-CheckColor1:
-    CMP X, 040
-    JL EndCheck
-    CMP X, 086
-    JG CheckColor2
-    CMP Y, 032
-    JL EndCheck
-    CMP Y, 063
-    JG CheckColor6
-    MOV COLOR_SELECTED, 1
-    JMP EndCheck
+    ; Color selection area
+    MOV COL, 20
+    MOV cx, 400
+    Colors_Horizontal1:
+      PUSH cx
+      DRAW_PIXEL 1, COL, 10
+      DRAW_PIXEL 14, COL, 130
+      INC COL
+      POP cx
+    LOOP Colors_Horizontal1
 
-CheckColor2:
-    CMP X, 120
-    JL EndCheck
-    CMP X, 166
-    JG CheckColor3
-    CMP Y, 032
-    JL EndCheck
-    CMP Y, 063
-    JG CheckColor7
-    MOV COLOR_SELECTED, 2
-    JMP EndCheck
-
-
-CheckColor3:
-CMP X, 200
-    JL EndCheck
-    CMP X, 246
-    JG CheckColor4
-    CMP Y, 032
-    JL EndCheck
-    CMP Y, 063
-    JG CheckColor8
-    MOV COLOR_SELECTED, 3
-    JMP EndCheck
-
-    CheckColor4:
-CMP X, 280
-    JL EndCheck
-    CMP X, 326
-    JG CheckColor5
-    CMP Y, 032
-    JL EndCheck
-    CMP Y, 063
-    JG CheckColor9
-    MOV COLOR_SELECTED, 4
-    JMP EndCheck
+    MOV FIL, 10
+    MOV cx, 120
+    Colors_Vertical1:
+      PUSH cx
+      DRAW_PIXEL 4, 20, FIL
+      DRAW_PIXEL 2, 420, FIL
+      INC FIL     
+      POP cx
+    LOOP Colors_Vertical1
+    PINTARLIMPIAR ENDP
 
 
-    CheckColor5:
-     CMP X, 406
-    JG EndCheck;exist fast intercambiar a evaluar la derecha primero
-    CMP Y, 032
-    JL EndCheck
 
-    CMP X, 360
-    JL CheckColor6
-   
-    CMP Y, 063
-    JG CheckColor10
-
-    MOV COLOR_SELECTED, 5
-    JMP EndCheck
-
-    CheckColor6:
-    CMP X, 040
-    JL EndCheck
-    CMP X, 086
-    JG CheckColor7
-    CMP Y, 080
-    JL EndCheck
-    CMP Y, 110
-    JG EndCheck
-    MOV COLOR_SELECTED, 6
-    JMP EndCheck
-
-CheckColor7:
-    CMP X, 120
-    JL EndCheck
-    CMP X, 166
-    JG CheckColor8
-    CMP Y, 080
-    JL EndCheck
-    CMP Y, 110
-    JG EndCheck
-    MOV COLOR_SELECTED, 10
-    JMP EndCheck
-
-
-CheckColor8:
-CMP X, 200
-    JL EndCheck
-    CMP X, 246
-    JG CheckColor9
-    CMP Y, 080
-    JL EndCheck
-    CMP Y, 110
-    JG EndCheck
-    MOV COLOR_SELECTED, 13
-    JMP EndCheck
-
-    CheckColor9:
-CMP X, 280
-    JL EndCheck
-    CMP X, 326
-    JG CheckColor10
-    CMP Y, 080
-    JL EndCheck
-    CMP Y, 110
-    JG EndCheck
-    MOV COLOR_SELECTED, 14
-    JMP EndCheck
-
-
-    CheckColor10:
-    CMP X, 360
-    JL EndCheck
-    CMP X, 406
-    JG EndCheck
-    CMP Y, 080
-    JL EndCheck
-    CMP Y, 110
-    JG EndCheck
-    MOV COLOR_SELECTED, 15
-    JMP EndCheck
-
-    
-
-EndCheck:
-    RET
-CheckClick ENDP
-
-
-  read_Key PROC far
+      read_Key PROC 
       MOV ah, 01h         ; Leer estado de la tecla
       INT 16h
 
-      JZ No_key           ; Si no se ha presionado ninguna tecla, saltar a No_key
+      JZ NoKeyFirstTwoTeclas           ; Si no se ha presionado ninguna tecla, saltar a No_key
 
       MOV ah, 00h         ; Leer la tecla
       INT 16h
@@ -544,7 +449,7 @@ CheckClick ENDP
       CMP ah, 4Dh         ; derecha
       JE Tcl_right
 
-      JMP No_key
+      JMP NoKeyFirstTwoTeclas
 
   Tcl_up:
       ; Verificar si está dentro del rango permitido antes de mover
@@ -569,6 +474,9 @@ CheckClick ENDP
       JG Tcl_end          ; No moverse si X está fuera del límite derecho
       INC SKETCH_Y               ; Mover hacia abajo
       JMP Tcl_end
+
+      NoKeyFirstTwoTeclas:
+      RET
 
   Tcl_left:
       ; Verificar si está dentro del rango permitido antes de mover
@@ -624,7 +532,7 @@ CheckClick ENDP
 
   read_Key ENDP
 
-CLEAR_SCREEN PROC
+      CLEAR_SCREEN PROC
     PUSH AX
     PUSH CX
     PUSH DX
@@ -644,7 +552,147 @@ CLEAR_SCREEN PROC
 CLEAR_SCREEN ENDP
 
 
-  end
+CheckClick PROC
+CheckColor1:
+    CMP X, 040
+    JL CheckColor2
+    CMP X, 086
+    JG CheckColor2
+    CMP Y, 032
+    JL CheckColor2
+    CMP Y, 063
+    JG CheckColor2
+    MOV COLOR_SELECTED, 1
+    JMP EndCheck1
+
+CheckColor2:
+    CMP X, 120
+    JL CheckColor3
+    CMP X, 166
+    JG CheckColor3
+    CMP Y, 032
+    JL CheckColor3
+    CMP Y, 063
+    JG CheckColor3
+    MOV COLOR_SELECTED, 2
+    JMP EndCheck1
+
+
+CheckColor3:
+CMP X, 200
+    JL CheckColor4
+    CMP X, 246
+    JG CheckColor4
+    CMP Y, 032
+    JL CheckColor4
+    CMP Y, 063
+    JG CheckColor4
+    MOV COLOR_SELECTED, 3
+    JMP EndCheck1
+
+    CheckColor4:
+CMP X, 280
+    JL CheckColor5
+    CMP X, 326
+    JG CheckColor5
+    CMP Y, 032
+    JL CheckColor5
+    CMP Y, 063
+    JG CheckColor5
+    MOV COLOR_SELECTED, 4
+    JMP EndCheck1
+
+
+    CheckColor5:
+     CMP X, 406
+    JG CheckColor6;exist fast intercambiar a evaluar la derecha primero
+    CMP Y, 032
+    JL CheckColor6
+    CMP X, 360
+    JL CheckColor6
+    CMP Y, 063
+    JG CheckColor6
+    MOV COLOR_SELECTED, 5
+    JMP EndCheck1
+
+EndCheck1:
+JMP EndCheck
+
+
+    CheckColor6:
+    CMP X, 040
+    JL EndCheck2
+    CMP X, 086
+    JG CheckColor7
+    CMP Y, 080
+    JL EndCheck2
+    CMP Y, 110
+    JG EndCheck2
+    MOV COLOR_SELECTED, 6
+    JMP EndCheck
+
+CheckColor7:
+    CMP X, 120
+    JL EndCheck2
+    CMP X, 166
+    JG CheckColor8
+    CMP Y, 080
+    JL EndCheck2
+    CMP Y, 110
+    JG EndCheck
+    MOV COLOR_SELECTED, 10
+    JMP EndCheck2
+ 
+ EndCheck2:
+JMP EndCheck
+
+CheckColor8:
+CMP X, 200
+    JL EndCheck
+    CMP X, 246
+    JG CheckColor9
+    CMP Y, 080
+    JL EndCheck
+    CMP Y, 110
+    JG EndCheck
+    MOV COLOR_SELECTED, 13
+    JMP EndCheck
+
+    CheckColor9:
+CMP X, 280
+    JL EndCheck
+    CMP X, 326
+    JG CheckColor10
+    CMP Y, 080
+    JL EndCheck
+    CMP Y, 110
+    JG EndCheck
+    MOV COLOR_SELECTED, 14
+    JMP EndCheck
+
+
+    CheckColor10:
+    CMP X, 360
+    JL EndCheck
+    CMP X, 406
+    JG EndCheck
+    CMP Y, 080
+    JL EndCheck
+    CMP Y, 110
+    JG EndCheck
+    MOV COLOR_SELECTED, 15
+    JMP EndCheck
+
+    
+
+EndCheck:
+    RET
+CheckClick ENDP
+ 
+
+main ENDP
+end main
+
 
   ; ;; Clear screen with int 10h and AH=6
   ;   MOV AH, 6
