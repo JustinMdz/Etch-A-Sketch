@@ -129,7 +129,7 @@ main PROC
     Save_Vertical:
       PUSH cx
       DRAW_PIXEL 11, 485, FIL
-      DRAW_PIXEL 11, 585, FIL
+      DRAW_PIXEL 11, 585, FIL 
       INC FIL
       POP cx 
     LOOP Save_Vertical
