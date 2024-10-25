@@ -1,7 +1,6 @@
 .model small
 .stack 100h
 .data
-  msg            db 'Hello, World!', 0Dh, 0Ah, '$'  ; El mensaje termina con '$' para DOS interrupt
   COLOR_SELECTED db 4
   COLORS         db "COLORS$"
   CLEAR          db "CLEAR$"
@@ -14,7 +13,6 @@
   buffer         DB 6 DUP(0)                        ; Buffer para almacenar el número convertido a cadena (máximo 5 dígitos más '$')
   TEN            DW 10                              ; Valor constante 10 para la división
         
-
   COL            DW ?
   FIL            DW ?
   X              DW 220
@@ -22,6 +20,9 @@
   SKETCH_X       DW 220
   SKETCH_Y       DW 305
 
+  fileNameBuffer   DB 'file.txt' ,0
+  matrixBuffer     DB   500 DUP(0)    
+  handle DW  ?
    SETPOSITION MACRO x, y
       MOV ah, 02h
       MOV bh, 0
@@ -262,10 +263,8 @@ main PROC
     LOOP Colors_Vertical
 
      principal_Loop:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+       CALL read_Key
       CALL CheckMouse
-      CALL read_Key
-      CALL PRINT_COORDINATES
-      CALL CLEAR_SCREEN
       jmp principal_Loop
       
        PRINT_COORDINATES PROC
@@ -337,9 +336,13 @@ NUM_TO_STRING ENDP
       MOV X, CX     ; Save the X position of the mouse
       MOV Y, DX     ; Save the Y position of the mouse
 
+      CALL CLEAR_SCREEN
+      CALL PRINT_COORDINATES
       CALL CheckInterSketchZone
       CALL CheckClearZone
       CALL CheckClick
+      CALL CheckGuardar
+      
 
 
       NoClick:
@@ -355,7 +358,7 @@ NUM_TO_STRING ENDP
     JL CheckInterSketchZoneEnd
     CMP Y, 470
     JG CheckInterSketchZoneEnd
-          MOV AX,X
+         MOV AX,X
       MOV SKETCH_X,AX
       MOV BX,Y
       MOV SKETCH_Y,BX
@@ -424,8 +427,6 @@ CheckClearZone ENDP
       POP cx
     LOOP Colors_Vertical1
     PINTARLIMPIAR ENDP
-
-
 
       read_Key PROC 
       MOV ah, 01h         ; Leer estado de la tecla
@@ -516,8 +517,10 @@ CheckClearZone ENDP
 
       MOV AX,SKETCH_X
       MOV X,AX
-      MOV bx,SKETCH_Y
-      MOV Y,bx
+      MOV BX,SKETCH_Y
+      MOV Y,BX
+      CALL CLEAR_SCREEN
+      CALL PRINT_COORDINATES
       JMP Done
 
   No_draw:
@@ -553,6 +556,8 @@ CLEAR_SCREEN ENDP
 
 
 CheckClick PROC
+
+
 CheckColor1:
     CMP X, 040
     JL CheckColor2
@@ -602,7 +607,6 @@ CMP X, 280
     MOV COLOR_SELECTED, 4
     JMP EndCheck1
 
-
     CheckColor5:
      CMP X, 406
     JG CheckColor6;exist fast intercambiar a evaluar la derecha primero
@@ -617,7 +621,6 @@ CMP X, 280
 
 EndCheck1:
 JMP EndCheck
-
 
     CheckColor6:
     CMP X, 040
@@ -684,11 +687,96 @@ CMP X, 280
     JMP EndCheck
 
     
-
 EndCheck:
     RET
 CheckClick ENDP
- 
+
+CheckGuardar PROC
+    CMP X, 485
+    JL CheckGuardarEndCheck
+    CMP X, 585
+    JG CheckGuardarEndCheck
+    CMP Y, 5
+    JL CheckGuardarEndCheck 
+    CMP Y, 45
+    JG CheckGuardarEndCheck
+   CALL SAVE_MATRIX
+   
+    CheckGuardarEndCheck:
+RET
+    CheckGuardar ENDP
+
+
+SAVE_MATRIX PROC
+   MOV AH, 3CH   
+   LEA DX, fileNameBuffer        
+    MOV CX, 1               
+    INT 21h                 
+    JC ErrorSaveFile           
+
+   MOV handle, AX
+   MOV Y, 141;;inicio y
+
+  SaveRows:
+  MOV DI,0
+  MOV X,21;;inicio x
+
+SaveColummns:
+MOV AH,0DH
+MOV BH,00H
+MOV CX,X
+MOV DX, Y
+INT 10h
+CALL ByteToHex
+
+MOV [matrixBuffer+DI],AL
+INC DI
+INC X
+CMP X,420
+JL SaveColummns
+
+MOV BYTE PTR [matrixBuffer+DI],'@'
+INC DI
+LEA DX,matrixBuffer
+MOV AH,40H
+MOV BX,handle
+MOV CX,DI
+INT 21H
+INC Y
+CMP Y,470
+JL SaveRows
+
+ ; Agregar el símbolo '%' al final del archivo
+   MOV BYTE PTR [matrixBuffer+DI], '%'
+   MOV AH, 40h
+   LEA DX,  [matrixBuffer+DI]
+   MOV BX, handle
+   MOV CX, 1
+   INT 21h
+    ; Cerrar archivo
+    MOV AH, 3Eh                ; Función DOS para cerrar archivo
+    MOV BX, handle       ; Handle del archivo en BX
+    INT 21h    
+
+     CALL CLEAR_SCREEN
+      CALL PRINT_COORDINATES       
+
+    ErrorSaveFile:
+    RET
+SAVE_MATRIX ENDP
+
+ByteToHex PROC
+ MOV AL,AL
+ AND AL,0Fh
+ ADD AL , '0'
+ CMP AL, '9'
+JLE SaveHex
+ ADD AL, 7
+ SaveHex:
+ MOV[matrixBuffer],AL
+RET
+ByteToHex ENDP
+
 
 main ENDP
 end main
