@@ -1,5 +1,10 @@
 .model small
 .stack 100h
+  ; Ajustes en las definiciones
+MIN_COL_INSERT EQU 450
+MAX_COL_INSERT EQU 620
+MIN_ROW_INSERT EQU 420
+MAX_ROW_INSERT EQU 470
 .data
   COLOR_SELECTED db 4
   COLORS         db "COLORS$"
@@ -12,7 +17,8 @@
   YPOS           db "Y:$"
   buffer         DB 6 DUP(0)                        ; Buffer para almacenar el número convertido a cadena (máximo 5 dígitos más '$')
   TEN            DW 10                              ; Valor constante 10 para la división
-        
+  text           DB 100 DUP('$')                      ; Buffer para almacenar el texto ingresado por el usuario
+
   COL            DW ?
   FIL            DW ?
   X              DW 220
@@ -75,6 +81,7 @@ main PROC
     MOV ax, 01h 
     INT 33h
 
+
     ; Print labels for each box
     SETPOSITION 1, 24
     PRINTMESSAGE COLORS
@@ -91,13 +98,13 @@ main PROC
     SETPOSITION 4, 64
     PRINTMESSAGE LOAD
 
-    SETPOSITION 7, 62
+    SETPOSITION 8, 62
     PRINTMESSAGE FILENAME
 
-     SETPOSITION 21,61
+     SETPOSITION 19,61
      PRINTMESSAGE  XPOS
 
-     SETPOSITION 22,61
+     SETPOSITION 20,61
      PRINTMESSAGE  YPOS
 
          ;Pintar los colores-----------------
@@ -136,43 +143,43 @@ main PROC
     LOOP Save_Vertical
 
     ; Load button area
-    MOV COL, 485
-    MOV cx, 100
+    MOV COL, 450
+    MOV cx, 170
     Load_Horizontal:
       PUSH cx
       DRAW_PIXEL 4, COL, 55
-      DRAW_PIXEL 4, COL, 95
+      DRAW_PIXEL 4, COL, 110
       INC COL
       POP cx
     LOOP Load_Horizontal
 
     MOV FIL, 55
-    MOV cx, 40
+    MOV cx, 55
     Load_Vertical:
       PUSH cx
-      DRAW_PIXEL 4, 485, FIL
-      DRAW_PIXEL 4, 585, FIL
+      DRAW_PIXEL 4, 450, FIL
+      DRAW_PIXEL 4, 620, FIL
       INC FIL
       POP cx
     LOOP Load_Vertical
 
   ; File name area
-    MOV COL, 485 
-    MOV cx, 100
+    MOV COL, 450 
+    MOV cx, 170
     Name_Horizontal:
       PUSH cx
-      DRAW_PIXEL 5, COL, 105
-      DRAW_PIXEL 5, COL, 145
+      DRAW_PIXEL 5, COL, 125
+      DRAW_PIXEL 5, COL, 180
       INC COL
       POP cx
     LOOP Name_Horizontal
 
-    MOV FIL, 105
-    MOV cx, 40
+    MOV FIL, 125
+    MOV cx, 55
     Name_Vertical:
       PUSH cx
-      DRAW_PIXEL 5, 485, FIL
-      DRAW_PIXEL 5, 585, FIL
+      DRAW_PIXEL 5, 450, FIL
+      DRAW_PIXEL 5, 620, FIL
       INC FIL
       POP cx 
     LOOP Name_Vertical
@@ -183,13 +190,13 @@ main PROC
     Clear_Horizontal:
       PUSH cx
       DRAW_PIXEL 12, COL, 370
-      DRAW_PIXEL 12, COL, 410
+      DRAW_PIXEL 12, COL, 400
       INC COL
       POP cx
     LOOP Clear_Horizontal
 
     MOV FIL, 370
-    MOV cx, 40
+    MOV cx, 30
     Clear_Vertical:
       PUSH cx
       DRAW_PIXEL 12, 485, FIL
@@ -199,22 +206,22 @@ main PROC
     LOOP Clear_Vertical
 
     ; Insert button area
-    MOV COL, 485
-    MOV cx, 100
+    MOV COL, 450
+    MOV cx, 170
     Insert_Horizontal:
       PUSH cx
       DRAW_PIXEL 10, COL, 420
-      DRAW_PIXEL 10, COL, 460
+      DRAW_PIXEL 10, COL, 470
       INC COL
       POP cx
     LOOP Insert_Horizontal
 
     MOV FIL, 420
-    MOV cx, 40
+    MOV cx, 50
     Insert_Vertical:
       PUSH cx
-      DRAW_PIXEL 10, 485, FIL
-      DRAW_PIXEL 10, 585, FIL
+      DRAW_PIXEL 10, 450, FIL
+      DRAW_PIXEL 10, 620, FIL
       INC FIL
       POP cx
     LOOP Insert_Vertical
@@ -270,12 +277,12 @@ main PROC
        PRINT_COORDINATES PROC
       MOV AX, X
 CALL NUM_TO_STRING
-SETPOSITION 21, 68
+SETPOSITION 19, 68
 PRINTMESSAGE buffer
 
 MOV AX, Y
 CALL NUM_TO_STRING
-SETPOSITION 22, 68
+SETPOSITION 20, 68
 PRINTMESSAGE buffer
 PRINT_COORDINATES ENDP
 
@@ -776,6 +783,50 @@ JLE SaveHex
  MOV[matrixBuffer],AL
 RET
 ByteToHex ENDP
+
+ReadLoop:
+    mov ah, 00h
+    int 16h                ; Lee el carácter del teclado
+    cmp al, 0dh            ; Si es Enter, sal
+    je Exit
+    cmp al, 08h            ; Si es Backspace, maneja retroceso
+    je HandleBackspace
+    cmp al, 20h            ; Solo permite imprimibles
+    jb ReadLoop
+    cmp al, 7Eh
+    ja ReadLoop
+
+    ; Asegura que no se exceda el rango permitido
+    mov ah, 03h
+    int 10h                ; Obtiene la posición del cursor actual
+    cmp dl, 90             ; Columna 90 como límite (ajustable para 600)
+    jae ReadLoop           ; No permite escritura fuera del rango
+    mov ah, 0Eh
+    int 10h                ; Escribe el carácter
+    jmp ReadLoop
+
+HandleBackspace:
+    mov ah, 03h
+    int 10h
+    cmp dl, 56             ; Límite izquierdo (ajustable para 456)
+    jle ReadLoop
+    dec dl
+    mov ah, 02h
+    int 10h
+    mov al, ' '
+    mov ah, 0Eh
+    int 10h
+    dec dl
+    mov ah, 02h
+    int 10h
+    jmp ReadLoop
+
+Exit:
+    mov ax, 4C00h
+    int 21h
+
+
+
 
 
 main ENDP
