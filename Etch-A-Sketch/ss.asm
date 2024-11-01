@@ -349,7 +349,6 @@ NUM_TO_STRING ENDP
       CALL CheckClearZone
       CALL CheckClick
       CALL CheckGuardar
-      CALL CheckCargar
       
 
 
@@ -730,13 +729,12 @@ RET
     CheckCargar ENDP
 
 loadFile PROC
+    MOV AH, 3D   ; Función DOS para abrir archivo existente
+    MOV AL, 0     ; Modo de apertura (0 = lectura)
+    LEA DX, fileNameBuffer  ; Puntero al nombre del archivo
+    INT 21H       ; Llama a la interrupción DOS
+    JC LoadError  ; Salta en caso de error
 
-   MOV AH, 3CH   
-   LEA DX, fileNameBuffer        
-    MOV CX, 0               
-    INT 21h                 
-    JC LoadExit  
-         
     MOV handle, AX   ; Guarda el handle del archivo
 
     ; Lee el archivo en matrixBuffer
@@ -775,7 +773,7 @@ DisplayRows:
     MOV X, 21    ; Inicio X
 
 DisplayColumns:
-    MOV AL, [matrixBuffer + DI] ; Lee el valor del pixel
+    MOV AL, [DI] ; Lee el valor del pixel
     CMP AL, '@'   ; Verifica si es el delimitador de fila
     JE NextRow
     CMP AL, '%'   ; Verifica fin del archivo
@@ -783,10 +781,10 @@ DisplayColumns:
 
     ; Convierte el valor hexadecimal de nuevo a binario si es necesario
     CALL HexToByte
-  DRAW_PIXEL AL,X,Y
+
     ; Dibuja el pixel en (X, Y)
     PUSH AX
-   
+     DRAW_PIXEL AL,X,Y
 
     INC X
     INC DI
