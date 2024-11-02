@@ -26,7 +26,7 @@ MAX_ROW_INSERT EQU 470
   SKETCH_X       DW 220
   SKETCH_Y       DW 305
 
-  fileNameBuffer   DB 'file.txt' ,0
+  fileNameBuffer   DB 'FILE.txt' ,0
   matrixBuffer     DB   500 DUP(0)    
   handle DW  ?
    SETPOSITION MACRO x, y
@@ -730,12 +730,12 @@ RET
     CheckCargar ENDP
 
 loadFile PROC
-
-   MOV AH, 3CH   
-   LEA DX, fileNameBuffer        
-    MOV CX, 0               
-    INT 21h                 
-    JC LoadExit  
+  PUSH AX DX CX BX 
+   MOV AH, 3DH   
+   MOV AL, 0
+   LEA DX, fileNameBuffer               
+   INT 21h                 
+   JC LoadExit  
          
     MOV handle, AX   ; Guarda el handle del archivo
 
@@ -763,6 +763,7 @@ LoadError:
     INT 21H          ; Muestra el mensaje de error
 
 LoadExit:
+    POP BX CX DX AX
     RET
 loadFile ENDP
 
@@ -770,7 +771,6 @@ DisplayMatrix PROC
     MOV SI, OFFSET matrixBuffer ; Inicia en el comienzo del buffer
     MOV Y, 141   ; Inicio Y
     MOV DI, 0    ; Índice en el buffer
-
 DisplayRows:
     MOV X, 21    ; Inicio X
 
